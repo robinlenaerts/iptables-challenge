@@ -1,0 +1,35 @@
+# Disable zone transfers with bind9 in /etc/bind/named.conf.options
+allow-transfer {"none";};
+
+# Allow loopback
+sudo iptables -A OUTPUT -o lo -j ACCEPT
+sudo iptables -A INPUT -i lo -j ACCEPT
+
+# Allow DNS, make sure you use the Google DNS Servers
+sudo iptables -A OUTPUT -p udp --dport 53 -d 8.8.8.8 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --dport 53 -d 8.8.4.4 -j ACCEPT
+
+# Allow connection to website security.ubuntu.com on port 80
+sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --dport 80 -d security.ubuntu.com -j ACCEPT
+
+# Protect server against ping flooding
+sudo iptables -A INPUT -p icmp --icmp-type echo-request -m limit --limit 1/second -j ACCEPT
+sudo iptables -A INPUT -p icmp --icmp-type echo-request -j DROP
+
+# Allow HTTP request to server
+sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 80 -j ACCEPT
+
+# Allow FTP traffic to server
+sudo iptables -A INPUT -p tcp --dport 21 -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 21 -j ACCEPT
+
+# Allow DNS requests to server
+sudo iptables -A INPUT -p udp --dport 53 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --sport 53 -j ACCEPT
+
+# Drop everything else
+sudo iptables -P INPUT DROP
+sudo iptables -P OUTPUT DROP
+sudo iptables -P FORWARD DROP
